@@ -1,28 +1,26 @@
-  // script.js
-// Ensure this script runs after the DOM is fully loaded
+ // script.js
 document.addEventListener('DOMContentLoaded', () => {
     // --- Constants ---
     const BASE_OPERATING_EXPENSE = 2000; 
-    const MATERIAL_MARKUP_PERCENTAGE = 50; 
+    const MATERIAL_MARKUP_PERCENTAGE_FOR_PRICING_COST = 50; // This is the fixed markup on actual material cost to include in "Pricing Costs"
 
     // --- DOM Elements ---
-    // It's crucial that these IDs match exactly with your HTML.
     const quoteForm = document.getElementById('quoteForm');
     
     // Input Fields
     const clientNameInput = document.getElementById('clientName');
     const projectNameInput = document.getElementById('projectName');
-    const materialCostInput = document.getElementById('materialCost');
+    const materialCostInput = document.getElementById('materialCost'); // This is ACTUAL material cost
     const serviceCostInput = document.getElementById('serviceCost');
     const laborHoursInput = document.getElementById('laborHours');
     const laborRateInput = document.getElementById('laborRate');
     const dayPercentageInput = document.getElementById('dayPercentage');
     const installationCostInput = document.getElementById('installationCost');
     const quoteOperatingExpensesInput = document.getElementById('quoteOperatingExpenses');
-    const taxRateInput = document.getElementById('taxRate');
-    const applyTaxCheckbox = document.getElementById('applyTax');
+    const profitabilitySlider = document.getElementById('profitabilitySlider');
+    const profitabilitySliderValueDisplay = document.getElementById('profitabilitySliderValue');
 
-    // Output Displays within the Form (not for input, but for showing calculated values like Total Labor)
+    // Output Displays within the Form
     const totalLaborCostDisplay = document.getElementById('totalLaborCostDisplay');
     const doubleMaterialCostDisplay = document.getElementById('doubleMaterialCostDisplay');
     
@@ -31,188 +29,163 @@ document.addEventListener('DOMContentLoaded', () => {
     const newQuoteBtn = document.getElementById('newQuoteBtn');
     
     // --- Helper Functions ---
-    // Safely gets a number from an input element.
     function getNumValue(element, defaultValue = 0) {
-        if (!element) {
-            // console.warn('Element not found in getNumValue for ID:', element ? element.id : 'unknown'); // For debugging
-            return defaultValue;
-        }
-        // Ensure element.value is treated as a string before trimming
+        if (!element) return defaultValue;
         const valStr = String(element.value);
         const trimmedValue = valStr.trim();
-        
-        if (trimmedValue === '') {
-            return defaultValue;
-        }
+        if (trimmedValue === '') return defaultValue;
         const value = parseFloat(trimmedValue);
         return isNaN(value) ? defaultValue : value;
     }
 
-    // Safely gets text from an input element.
     function getTextValue(element, defaultValue = 'N/A') {
-        if (!element) {
-            // console.warn('Element not found in getTextValue for ID:', element ? element.id : 'unknown'); // For debugging
-            return defaultValue;
-        }
-        const valStr = String(element.value); // Ensure it's a string
+        if (!element) return defaultValue;
+        const valStr = String(element.value);
         return valStr.trim() === '' ? defaultValue : valStr.trim();
     }
 
-    // Sets the text content of a display element (e.g., a span or div).
-    function setDisplayValue(element, value, isCurrency = true, decimals = 2) {
+    function setDisplayValue(element, value, isCurrency = true, decimals = 2, addMinusSign = false) {
         if (element) {
-            let displayVal = value;
+            let displayValStr = String(value); // Default to string if not number
             if (typeof value === 'number') {
-                if (isCurrency) {
-                    displayVal = '$' + value.toFixed(decimals);
+                let prefix = isCurrency ? '$' : '';
+                if (addMinusSign && value !== 0) {
+                    prefix = (isCurrency ? '-$' : '-');
+                    displayValStr = prefix + Math.abs(value).toFixed(decimals);
                 } else {
-                    displayVal = value.toFixed(decimals);
+                    displayValStr = prefix + value.toFixed(decimals);
                 }
             }
-            element.textContent = displayVal;
-        } else {
-            // console.warn('Display element not found in setDisplayValue for value:', value); // For debugging
+            element.textContent = displayValStr;
         }
     }
 
-    // Sets percentage text content.
     function setPercentageDisplay(element, value, decimals = 1) {
         if(element) {
-            let displayVal = value;
+            let displayValStr = String(value);
             if (typeof value === 'number') {
-                displayVal = value.toFixed(decimals) + '%';
+                displayValStr = value.toFixed(decimals) + '%';
             }
-            element.textContent = displayVal;
-        } else {
-             // console.warn('Display element for percentage not found for value:', value); // For debugging
+            element.textContent = displayValStr;
         }
     }
 
-    // Updates the date in the preview.
     function updateDate() {
         const today = new Date();
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        const dateElement = document.getElementById('preview_date');
-        setDisplayValue(dateElement, today.toLocaleDateString('en-US', options), false);
+        setDisplayValue(document.getElementById('preview_date'), today.toLocaleDateString('en-US', options), false);
     }
 
     // --- Main Calculation and Update Logic ---
-    // This function is called whenever an input changes or on initial load.
     function calculateAndUpdateAll() {
-        // console.log('Calculating...'); // For debugging: check if function is called
-
-        // Get input values using helper functions
+        // Get input values
         const clientName = getTextValue(clientNameInput);
         const projectName = getTextValue(projectNameInput);
-        const materialCost = getNumValue(materialCostInput);
-        // console.log('Material Cost Input:', materialCost); // For debugging
+        const actualMaterialCost = getNumValue(materialCostInput);
         const serviceCost = getNumValue(serviceCostInput);
         const laborHours = getNumValue(laborHoursInput);
         const laborRate = getNumValue(laborRateInput);
         const dayPercentage = getNumValue(dayPercentageInput);
         const installationCost = getNumValue(installationCostInput);
-        const quoteOperatingExpenses = getNumValue(quoteOperatingExpensesInput);
-        const taxRate = getNumValue(taxRateInput);
-        const applyTax = applyTaxCheckbox ? applyTaxCheckbox.checked : true; // Default to true if checkbox not found
+        const quoteSpecificOpEx = getNumValue(quoteOperatingExpensesInput);
+        const targetMarkupOnPricingCostsPercent = getNumValue(profitabilitySlider);
 
-        // --- Perform Calculations ---
-        const totalLabor = laborHours * laborRate;
-        setDisplayValue(totalLaborCostDisplay, totalLabor);
+        if (profitabilitySliderValueDisplay) {
+            profitabilitySliderValueDisplay.textContent = targetMarkupOnPricingCostsPercent.toFixed(0);
+        }
 
-        const doubleMaterialCost = materialCost * 2;
-        setDisplayValue(doubleMaterialCostDisplay, doubleMaterialCost);
+        // --- Intermediate Calculations ---
+        // For display in form
+        const totalLaborCostActual = laborHours * laborRate;
+        setDisplayValue(totalLaborCostDisplay, totalLaborCostActual);
+
+        const doubleActualMaterialCost = actualMaterialCost * 2;
+        setDisplayValue(doubleMaterialCostDisplay, doubleActualMaterialCost);
         
-        const materialMarkupValue = materialCost * (MATERIAL_MARKUP_PERCENTAGE / 100);
-        const materialCostMarkedUp = materialCost + materialMarkupValue;
-
-        const subtotal = materialCostMarkedUp + serviceCost + totalLabor + installationCost;
-        const taxAmount = applyTax ? subtotal * (taxRate / 100) : 0;
-        const grandTotal = subtotal + taxAmount;
-
-        const totalRevenueAfterTax = grandTotal; 
+        // For Pricing Costs
+        const materialCostMarkedUpForPricing = actualMaterialCost * (1 + MATERIAL_MARKUP_PERCENTAGE_FOR_PRICING_COST / 100);
         const dayBasedOperatingExpenses = (dayPercentage / 100) * BASE_OPERATING_EXPENSE;
-        
-        const netProfit = totalRevenueAfterTax - 
-                          dayBasedOperatingExpenses - 
-                          materialCost - 
-                          totalLabor - 
-                          serviceCost -
-                          installationCost -
-                          quoteOperatingExpenses;
 
-        const profitPercentageOfRevenue = totalRevenueAfterTax > 0 ? (netProfit / totalRevenueAfterTax) * 100 : 0;
-        const markupTargetLower = doubleMaterialCost + 300;
-        const markupTargetUpper = doubleMaterialCost + 400;
+        const totalPricingCosts = materialCostMarkedUpForPricing + 
+                                  serviceCost + 
+                                  installationCost + 
+                                  dayBasedOperatingExpenses + 
+                                  quoteSpecificOpEx; 
+                                  // Labor is NOT included in pricing costs base
+
+        // Selling Price Calculation
+        const sellingPrice = totalPricingCosts * (1 + targetMarkupOnPricingCostsPercent / 100);
+
+        // Actual Total Costs (for profit breakdown, includes actual material cost and labor)
+        const totalActualCostsAllIncluded = actualMaterialCost + 
+                                            serviceCost + 
+                                            installationCost + 
+                                            dayBasedOperatingExpenses + 
+                                            quoteSpecificOpEx +
+                                            totalLaborCostActual;
+
+        // Net Profit Calculation
+        const actualNetProfit = sellingPrice - totalActualCostsAllIncluded;
+        const netProfitMarginOnRevenue = sellingPrice > 0 ? (actualNetProfit / sellingPrice) * 100 : 0;
 
         // --- Update Preview Pane ---
-        // Fetch preview elements each time or store them globally if performance becomes an issue.
-        // For now, fetching directly for clarity that these are distinct from input elements.
         setDisplayValue(document.getElementById('preview_clientName'), clientName, false);
         setDisplayValue(document.getElementById('preview_projectName'), projectName, false);
-        setDisplayValue(document.getElementById('preview_materialCost'), materialCost);
-        setDisplayValue(document.getElementById('preview_materialMarkupPercentage'), MATERIAL_MARKUP_PERCENTAGE, false, 0);
-        setDisplayValue(document.getElementById('preview_materialMarkupValue'), materialMarkupValue);
-        setDisplayValue(document.getElementById('preview_materialCostMarkedUp'), materialCostMarkedUp);
+        
+        // Cost Breakdown in Preview
+        setDisplayValue(document.getElementById('preview_materialCost'), actualMaterialCost);
+        setDisplayValue(document.getElementById('preview_materialMarkupPercentage'), MATERIAL_MARKUP_PERCENTAGE_FOR_PRICING_COST, false, 0);
+        setDisplayValue(document.getElementById('preview_materialMarkupValue'), actualMaterialCost * (MATERIAL_MARKUP_PERCENTAGE_FOR_PRICING_COST / 100));
+        setDisplayValue(document.getElementById('preview_materialCostMarkedUp'), materialCostMarkedUpForPricing);
         setDisplayValue(document.getElementById('preview_serviceCost'), serviceCost);
         setDisplayValue(document.getElementById('preview_laborHours'), laborHours, false, 1);
         setDisplayValue(document.getElementById('preview_laborRate'), laborRate, true, 2);
-        setDisplayValue(document.getElementById('preview_totalLabor'), totalLabor);
+        setDisplayValue(document.getElementById('preview_totalLabor'), totalLaborCostActual); // Shows actual labor cost
         setDisplayValue(document.getElementById('preview_installationCost'), installationCost);
-        setDisplayValue(document.getElementById('preview_subtotal'), subtotal);
-        setDisplayValue(document.getElementById('preview_taxRate'), taxRate, false, 2);
-        setDisplayValue(document.getElementById('preview_taxAmount'), taxAmount);
-        setDisplayValue(document.getElementById('preview_grandTotal'), grandTotal);
+        setDisplayValue(document.getElementById('preview_grandTotal'), sellingPrice); // "Total" is now Selling Price
+
+        // Business Analysis Preview
+        setPercentageDisplay(document.getElementById('preview_targetMarkupPercentage'), targetMarkupOnPricingCostsPercent);
         setPercentageDisplay(document.getElementById('preview_dayPercentage'), dayPercentage);
-        setDisplayValue(document.getElementById('preview_quoteOperatingExpenses'), quoteOperatingExpenses);
-        setDisplayValue(document.getElementById('preview_doubleMaterialCost'), doubleMaterialCost);
-        setDisplayValue(document.getElementById('preview_markupTarget'), `$${markupTargetLower.toFixed(2)} - $${markupTargetUpper.toFixed(2)}`, false);
-        setPercentageDisplay(document.getElementById('preview_profitPercentage'), profitPercentageOfRevenue);
-        setDisplayValue(document.getElementById('preview_profit_totalRevenue'), totalRevenueAfterTax);
-        setDisplayValue(document.getElementById('preview_profit_operatingExpenses'), dayBasedOperatingExpenses);
-        setDisplayValue(document.getElementById('preview_profit_materialCosts'), materialCost);
-        setDisplayValue(document.getElementById('preview_profit_laborCosts'), totalLabor);
-        setDisplayValue(document.getElementById('preview_profit_serviceCosts'), serviceCost);
-        setDisplayValue(document.getElementById('preview_profit_installationCosts'), installationCost);
-        setDisplayValue(document.getElementById('preview_profit_quoteSpecificOpEx'), quoteOperatingExpenses);
-        setDisplayValue(document.getElementById('preview_netProfit'), netProfit);
+        setDisplayValue(document.getElementById('preview_quoteOperatingExpenses'), quoteSpecificOpEx);
+        setDisplayValue(document.getElementById('preview_doubleMaterialCost'), doubleActualMaterialCost);
+        setPercentageDisplay(document.getElementById('preview_profitPercentage'), netProfitMarginOnRevenue); // This is Net Profit Margin on Revenue
+        
+        // Profit Breakdown Preview
+        setDisplayValue(document.getElementById('preview_profit_totalRevenue'), sellingPrice);
+        setDisplayValue(document.getElementById('preview_profit_operatingExpenses'), dayBasedOperatingExpenses, true, 2, true);
+        setDisplayValue(document.getElementById('preview_profit_materialCosts'), actualMaterialCost, true, 2, true);
+        setDisplayValue(document.getElementById('preview_profit_laborCosts'), totalLaborCostActual, true, 2, true);
+        setDisplayValue(document.getElementById('preview_profit_serviceCosts'), serviceCost, true, 2, true);
+        setDisplayValue(document.getElementById('preview_profit_installationCosts'), installationCost, true, 2, true);
+        setDisplayValue(document.getElementById('preview_profit_quoteSpecificOpEx'), quoteSpecificOpEx, true, 2, true);
+        setDisplayValue(document.getElementById('preview_netProfit'), actualNetProfit);
     }
 
-    // Resets the form and updates the preview.
     function resetFormAndPreview() {
         if (quoteForm) {
             quoteForm.reset(); 
         }
-        // Ensure defaults are set after reset, as .reset() reverts to HTML defaults
-        if(taxRateInput) taxRateInput.value = "8.25"; 
-        if(applyTaxCheckbox) applyTaxCheckbox.checked = true; 
-        
+        if (profitabilitySlider) { // Reset slider to default
+            profitabilitySlider.value = "50";
+        }
         calculateAndUpdateAll(); 
         updateDate(); 
-        const quoteIdElement = document.getElementById('preview_quoteId');
-        setDisplayValue(quoteIdElement, 'QT-GEM-001', false); // Reset quote ID if it's dynamic in future
+        setDisplayValue(document.getElementById('preview_quoteId'), 'QT-GEM-001', false);
     }
 
     // --- Event Listeners for Live Updates ---
-    // List of all input elements that should trigger a recalculation.
     const inputsToWatch = [
         clientNameInput, projectNameInput, materialCostInput, serviceCostInput,
         laborHoursInput, laborRateInput, dayPercentageInput, installationCostInput,
-        quoteOperatingExpensesInput, taxRateInput
+        quoteOperatingExpensesInput, profitabilitySlider // Added slider
     ];
 
     inputsToWatch.forEach(inputElement => {
-        if (inputElement) { // Check if the element was found
+        if (inputElement) {
             inputElement.addEventListener('input', calculateAndUpdateAll);
-        } else {
-            // console.warn('An input element to watch was not found. This might be okay if the element is optional.'); // For debugging
         }
     });
-
-    if (applyTaxCheckbox) {
-        applyTaxCheckbox.addEventListener('change', calculateAndUpdateAll);
-    } else {
-        // console.warn('Apply tax checkbox not found.'); // For debugging
-    }
     
     if (resetBtn) {
         resetBtn.addEventListener('click', resetFormAndPreview);
@@ -222,10 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // --- Initial Setup ---
-    // This runs once when the page is loaded and ready.
     updateDate();
-    if(taxRateInput) { // Ensure taxRateInput exists before setting its value
-        taxRateInput.value = "8.25"; 
-    }
-    calculateAndUpdateAll(); // Perform an initial calculation to populate fields
+    if (profitabilitySlider) profitabilitySlider.value = "50"; // Set initial slider value
+    calculateAndUpdateAll(); 
 });
