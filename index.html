@@ -3,264 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garage Door Price Calculator</title>
+    <title>Commercial Quote Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .tab-button { transition: all 0.3s ease; }
-        .tab-button.active { border-color: #3B82F6; background-color: #3B82F6; color: white; }
-        .tab-button:not(.active):hover { background-color: #E5E7EB; }
-        .input-field { border-color: #D1D5DB; }
-        .input-field:focus { border-color: #3B82F6; box-shadow: 0 0 0 2px #BFDBFE; outline: none;}
-        .output-field { background-color: #F3F4F6; font-weight: bold; }
-        .section-title { border-bottom: 2px solid #3B82F6; padding-bottom: 0.5rem; margin-bottom: 1rem; color: #1E40AF; font-size: 1.25rem;}
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-        .form-group { display: flex; flex-direction: column; margin-bottom: 0.75rem; }
-        .form-group label { margin-bottom: 0.25rem; color: #374151; font-size: 0.875rem; }
-        .form-group input, .form-group select { padding: 0.5rem; border-radius: 0.375rem; border: 1px solid #D1D5DB; width: 100%; }
-        .form-group .output-value { padding: 0.5rem; border-radius: 0.375rem; background-color: #E5E7EB; color: #1F2937; font-weight: 500; min-height: 38px; display: flex; align-items: center;}
-        .summary-section { background-color: #EFF6FF; padding: 1rem; border-radius: 0.5rem; margin-top: 1.5rem; }
-        .summary-section .form-group label { font-weight: 600; }
-        .summary-section .output-value.grand-total { font-size: 1.25rem; color: #1E40AF; }
+        .icon-placeholder { width: 20px; height: 20px; display: inline-block; margin-right: 8px; vertical-align: middle; } /* Simple placeholder */
+        .form-section { border: 1px solid #E5E7EB; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; background-color: white;}
+        .form-section-title { font-size: 1.125rem; font-weight: 600; color: #1F2937; margin-bottom: 1rem; display: flex; align-items: center; }
+        .preview-section { margin-bottom: 1.5rem; }
+        .preview-section h4 { font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;}
+        .preview-item { display: flex; justify-content: space-between; font-size: 0.875rem; color: #4B5563; padding: 0.3rem 0; }
+        .preview-item.total { font-weight: 600; color: #1F2937; font-size: 1rem; border-top: 1px solid #E5E7EB; padding-top: 0.5rem; margin-top:0.5rem;}
+        .preview-item .value { font-weight: 500; color: #1F2937; }
+        .input-field { appearance: none; border: 1px solid #D1D5DB; border-radius: 0.375rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; width: 100%; transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .input-field:focus { border-color: #2563EB; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25); outline: none; }
+        .input-label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }
+        .btn { padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 500; font-size: 0.875rem; transition: background-color 0.2s ease-in-out; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-primary { background-color: #2563EB; color: white; }
+        .btn-primary:hover { background-color: #1D4ED8; }
+        .btn-secondary { background-color: #E5E7EB; color: #374151; border: 1px solid #D1D5DB;}
+        .btn-secondary:hover { background-color: #D1D5DB; }
+        .output-display { font-size: 0.875rem; font-weight: 500; color: #1F2937; background-color: #F3F4F6; padding: 0.5rem 0.75rem; border-radius: 0.375rem; text-align: right; }
+        /* Lucide Icons via SVG */
+        .lucide { width: 1em; height: 1em; vertical-align: -0.125em; display: inline-block; }
     </style>
 </head>
-<body class="bg-gray-100 p-4 md:p-8">
+<body class="bg-gray-100">
 
-    <div class="container mx-auto max-w-5xl bg-white shadow-xl rounded-lg p-6 md:p-8">
-        <header class="mb-6 text-center">
-            <h1 class="text-3xl font-bold text-gray-800">Garage Door Price Calculator</h1>
-        </header>
-
-        <!-- Tabs Navigation -->
-        <div class="mb-6 flex justify-center border-b border-gray-300">
-            <button id="tab-commercial" class="tab-button active text-sm md:text-base font-medium py-3 px-6 border-b-2 border-transparent text-blue-600 hover:text-blue-800 focus:outline-none">Commercial</button>
-            <button id="tab-residential" class="tab-button text-sm md:text-base font-medium py-3 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none">Residential</button>
-            <button id="tab-service" class="tab-button text-sm md:text-base font-medium py-3 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none">Service Call</button>
-        </div>
-
-        <!-- Tab Content -->
-        <div id="content-commercial" class="tab-content">
-            <h2 class="section-title">Commercial Door Calculator</h2>
-            <div class="grid-container">
-                <!-- Door Components -->
-                <div class="p-4 bg-blue-50 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold mb-3 text-blue-700">Door Components Costs</h3>
-                    <div class="form-group">
-                        <label for="com_c11">Sections Cost:</label>
-                        <input type="number" id="com_c11" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_c12">Windows / Lite Kit Cost:</label>
-                        <input type="number" id="com_c12" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_c13">Insulation Cost:</label>
-                        <input type="number" id="com_c13" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_c14">Perimeter Seal / Jamb Seal Cost:</label>
-                        <input type="number" id="com_c14" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_c15">Inside Lock Cost:</label>
-                        <input type="number" id="com_c15" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_c16">Struts Cost:</label>
-                        <input type="number" id="com_c16" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Subtotal Door Parts (C11:C16):</label>
-                        <div id="com_calc_sum_c11_c16" class="output-field output-value">0.00</div>
-                    </div>
-                </div>
-
-                <!-- Track, Spring, Misc Options -->
-                <div class="p-4 bg-green-50 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold mb-3 text-green-700">Track, Spring & Options</h3>
-                    <div class="form-group">
-                        <label for="com_c17_price">Track Price (C17):</label>
-                        <input type="number" id="com_c17_price" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_a19_qty">Track Quantity (A19):</label>
-                        <input type="number" id="com_a19_qty" class="input-field" placeholder="1" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Total Track Assembly (C17*A19):</label>
-                        <div id="com_calc_c17_times_a19" class="output-field output-value">0.00</div>
-                    </div>
-
-                    <div class="form-group mt-4">
-                        <label for="com_b21_price">Spring Price (B21):</label>
-                        <input type="number" id="com_b21_price" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_a21_qty">Spring Quantity (A21):</label>
-                        <input type="number" id="com_a21_qty" class="input-field" placeholder="1" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Total Spring Assembly (B21*A21):</label>
-                        <div id="com_calc_b21_times_a21" class="output-field output-value">0.00</div>
-                    </div>
-                    
-                    <div class="form-group mt-4">
-                        <label for="com_a23_multiplier">Misc Options Multiplier (A23, applies to Track Total):</label>
-                        <input type="number" id="com_a23_multiplier" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Total Misc Options (Track Total * A23):</label>
-                        <div id="com_calc_c19val_times_a23" class="output-field output-value">0.00</div>
-                    </div>
-                    <div class="form-group mt-2">
-                        <label>Subtotal (Track + Spring + Misc Options):</label>
-                        <div id="com_calc_sum_c19_c21_c23_results" class="output-field output-value">0.00</div>
-                    </div>
-                </div>
-
-                <!-- Labor -->
-                <div class="p-4 bg-yellow-50 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold mb-3 text-yellow-700">Labor Costs</h3>
-                    <div class="form-group"><label for="com_c25">Basic Install (C25):</label><input type="number" id="com_c25" class="input-field" placeholder="0.00" step="0.01"></div>
-                    <div class="form-group"><label for="com_c26">High Lift/Vertical Lift (C26):</label><input type="number" id="com_c26" class="input-field" placeholder="0.00" step="0.01"></div>
-                    <div class="form-group"><label for="com_c27">Opener Install (C27):</label><input type="number" id="com_c27" class="input-field" placeholder="0.00" step="0.01"></div>
-                    <div class="form-group"><label for="com_c28">Removal/Disposal (C28):</label><input type="number" id="com_c28" class="input-field" placeholder="0.00" step="0.01"></div>
-                    <div class="form-group"><label for="com_c29">Travel/Service Fee (C29):</label><input type="number" id="com_c29" class="input-field" placeholder="0.00" step="0.01"></div>
-                    <div class="form-group"><label for="com_c30">Other Labor (C30):</label><input type="number" id="com_c30" class="input-field" placeholder="0.00" step="0.01"></div>
-                    <div class="form-group">
-                        <label>Subtotal Labor (C25:C30):</label>
-                        <div id="com_calc_sum_c25_c30" class="output-field output-value">0.00</div>
-                    </div>
-                </div>
-                
-                <!-- Operator -->
-                <div class="p-4 bg-indigo-50 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold mb-3 text-indigo-700">Operator Costs</h3>
-                    <div class="form-group">
-                        <label for="com_c31_price_operator">Operator Price (C31):</label>
-                        <input type="number" id="com_c31_price_operator" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="com_a33_qty_operator">Operator Quantity (A33):</label>
-                        <input type="number" id="com_a33_qty_operator" class="input-field" placeholder="1" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Total Operator Cost (C31*A33):</label>
-                        <div id="com_calc_c31val_times_a33" class="output-field output-value">0.00</div>
-                    </div>
-                     <div class="form-group mt-2">
-                        <label>Total Labor + Operator (Formula C31+C33):</label>
-                        <div id="com_calc_sum_c31_plus_c33_results" class="output-field output-value">0.00</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Commercial Summary & Totals -->
-            <div class="summary-section mt-6">
-                <h3 class="text-xl font-semibold mb-4 text-gray-700">Commercial Quote Summary</h3>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div class="form-group"><label>Total Door Components Cost:</label><div id="com_total_door_components_cost" class="output-field output-value">0.00</div></div>
-                    <div class="form-group"><label>Total Track, Spring, Options (Formula Subtotal):</label><div id="com_total_track_spring_options_cost" class="output-field output-value">0.00</div></div>
-                    <div class="form-group"><label>Total Labor Cost:</label><div id="com_total_labor_cost_summary" class="output-field output-value">0.00</div></div>
-                    <div class="form-group"><label>Total Operator Cost:</label><div id="com_total_operator_cost_summary" class="output-field output-value">0.00</div></div>
-                    <div class="form-group col-span-full md:col-span-1"><label>Total Direct Job Costs:</label><div id="com_total_direct_job_costs" class="output-field output-value text-lg">0.00</div></div>
-                    
-                    <div class="form-group">
-                        <label for="com_markup_percentage">Markup Percentage (%):</label>
-                        <input type="number" id="com_markup_percentage" class="input-field" placeholder="0" step="0.01">
-                    </div>
-                    <div class="form-group"><label>Markup Amount:</label><div id="com_markup_amount" class="output-field output-value">0.00</div></div>
-                    <div class="form-group"><label>Subtotal Before Tax (C35 - Selling Price):</label><div id="com_subtotal_before_tax" class="output-field output-value text-lg">0.00</div></div>
-                    
-                    <div class="form-group">
-                        <label for="com_tax_rate">Tax Rate (%):</label>
-                        <input type="number" id="com_tax_rate" class="input-field" placeholder="0" step="0.01">
-                    </div>
-                    <div class="form-group"><label>Tax Amount:</label><div id="com_tax_amount" class="output-field output-value">0.00</div></div>
-                    <div class="form-group col-span-full md:col-span-1"><label>Grand Total:</label><div id="com_grand_total" class="output-field output-value grand-total text-xl">0.00</div></div>
-                </div>
-            </div>
-            
-            <!-- Specific Profit Calculation (Commercial) -->
-            <div class="summary-section mt-6 bg-purple-50">
-                 <h3 class="text-xl font-semibold mb-4 text-purple-700">Specific Profit Calculation (Formulas C35-C40)</h3>
-                 <p class="text-sm text-purple-600 mb-2">This section uses specific formulas: C37 = Track Total + Spring Total. C39 = C35 (Subtotal Before Tax) - C37. C40 = (C39/C35)*100.</p>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div class="form-group"><label>Cost for Profit Calc (C37 = Track + Spring):</label><div id="com_cost_for_profit_calc_c37" class="output-field output-value">0.00</div></div>
-                    <div class="form-group"><label>Profit (C39 = C35 - C37):</label><div id="com_profit_c39" class="output-field output-value">0.00</div></div>
-                    <div class="form-group col-span-full md:col-span-1"><label>Profit Margin (C40 = (C39/C35)*100%):</label><div id="com_profit_margin_c40" class="output-field output-value">0.00%</div></div>
-                </div>
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-xl font-semibold text-gray-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calculator inline-block mr-2"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+                    Commercial Quote Calculator
+                </h1>
+                <button id="newQuoteBtn" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    New Quote
+                </button>
             </div>
         </div>
+    </header>
 
-        <div id="content-residential" class="tab-content hidden">
-            <h2 class="section-title">Residential Door Calculator</h2>
-            <p class="text-gray-600">Residential calculator fields will be similar to commercial. This section is a placeholder and will use the same logic structure. You can duplicate and adjust commercial fields and IDs (e.g., `res_c11` instead of `com_c11`).</p>
-            <!-- Residential Fields will go here, mirroring commercial structure with 'res_' prefix -->
-            <!-- For brevity, I'm not duplicating all fields here, but they would follow the commercial pattern -->
-            <div class="p-4 bg-blue-50 rounded-lg shadow mb-4">
-                <h3 class="text-lg font-semibold mb-3 text-blue-700">Door Components Costs</h3>
-                <div class="form-group">
-                    <label for="res_c11">Sections Cost:</label>
-                    <input type="number" id="res_c11" class="input-field" placeholder="0.00" step="0.01">
-                </div>
-                <!-- Add other residential door component fields here, similar to commercial -->
-                <!-- e.g., res_c12 for windows, res_c13 for insulation, etc. -->
-            </div>
-            <!-- Add other sections for Residential (Track/Spring, Labor, Operator) similar to Commercial -->
-            <!-- Remember to use 'res_' prefix for all IDs -->
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Quote Calculator -->
+            <div class="lg:col-span-2 space-y-6">
+                <p class="text-sm text-gray-600">Enter project details to generate a professional quote.</p>
 
-             <div class="summary-section mt-6">
-                <h3 class="text-xl font-semibold mb-4 text-gray-700">Residential Quote Summary</h3>
-                 <!-- Add all relevant summary fields for residential, similar to commercial -->
-                 <!-- e.g., res_total_door_components_cost, res_total_labor_cost_summary etc. -->
-                 <div class="form-group"><label>Grand Total:</label><div id="res_grand_total" class="output-field output-value grand-total text-xl">0.00</div></div>
-            </div>
-        </div>
+                <form id="quoteForm">
+                    <!-- Client Information -->
+                    <section class="form-section">
+                        <h3 class="form-section-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round mr-2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                            Client Information
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="clientName" class="input-label">Client Name</label>
+                                <input type="text" id="clientName" name="clientName" class="input-field" placeholder="Enter client name">
+                            </div>
+                            <div>
+                                <label for="projectName" class="input-label">Project Name</label>
+                                <input type="text" id="projectName" name="projectName" class="input-field" placeholder="Enter project name">
+                            </div>
+                        </div>
+                    </section>
 
-        <div id="content-service" class="tab-content hidden">
-            <h2 class="section-title">Service Call Calculator</h2>
-            <div class="grid-container">
-                <div class="p-4 bg-teal-50 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold mb-3 text-teal-700">Service Call Details</h3>
-                    <div class="form-group">
-                        <label for="sc_service_call_fee">Base Service Call Fee:</label>
-                        <input type="number" id="sc_service_call_fee" class="input-field" placeholder="0.00" step="0.01">
+                    <!-- Materials & Services -->
+                    <section class="form-section">
+                        <h3 class="form-section-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box mr-2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                            Materials & Services
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="materialCost" class="input-label">Material Costs ($)</label>
+                                <input type="number" id="materialCost" name="materialCost" class="input-field" placeholder="0.00" step="0.01">
+                            </div>
+                            <div>
+                                <label for="serviceCost" class="input-label">Service Costs ($)</label>
+                                <input type="number" id="serviceCost" name="serviceCost" class="input-field" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Labor -->
+                    <section class="form-section">
+                        <h3 class="form-section-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-person-standing mr-2"><circle cx="12" cy="5" r="1"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/></svg>
+                            Labor
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div>
+                                <label for="laborHours" class="input-label">Labor Hours</label>
+                                <input type="number" id="laborHours" name="laborHours" class="input-field" placeholder="0" step="0.1">
+                            </div>
+                            <div>
+                                <label for="laborRate" class="input-label">Labor Rate (per hour) ($)</label>
+                                <input type="number" id="laborRate" name="laborRate" class="input-field" placeholder="0.00" step="0.01">
+                            </div>
+                            <div>
+                                <label class="input-label">Total Labor Cost ($)</label>
+                                <div id="totalLaborCostDisplay" class="output-display">0.00</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Business Calculations -->
+                    <section class="form-section">
+                        <h3 class="form-section-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-briefcase mr-2"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                            Business Calculations
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 items-end">
+                            <div>
+                                <label for="dayPercentage" class="input-label">Day Percentage (%)</label>
+                                <input type="number" id="dayPercentage" name="dayPercentage" class="input-field" placeholder="0" step="0.01">
+                                <p class="text-xs text-gray-500 mt-1">Percentage of day (calculates against $2,000 base operating expenses for profit breakdown)</p>
+                            </div>
+                            <div>
+                                <label for="installationCost" class="input-label">Installation Cost ($)</label>
+                                <input type="number" id="installationCost" name="installationCost" class="input-field" placeholder="0.00" step="0.01">
+                            </div>
+                            <div>
+                                <label for="quoteOperatingExpenses" class="input-label">Additional Operating Expenses for this Quote ($)</label>
+                                <input type="number" id="quoteOperatingExpenses" name="quoteOperatingExpenses" class="input-field" placeholder="0.00" step="0.01">
+                            </div>
+                             <div>
+                                <label class="input-label">Double Material Costs ($)</label>
+                                <div id="doubleMaterialCostDisplay" class="output-display">0.00</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Tax Configuration -->
+                    <section class="form-section">
+                        <h3 class="form-section-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark mr-2"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+                            Tax Configuration
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                            <div>
+                                <label for="taxRate" class="input-label">Tax Rate (%)</label>
+                                <input type="number" id="taxRate" name="taxRate" class="input-field" placeholder="8.25" step="0.01">
+                            </div>
+                            <div class="mt-4 md:mt-6">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="applyTax" name="applyTax" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                    <span class="ml-2 text-sm text-gray-700">Apply tax to this quote</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 mt-8">
+                        <button type="button" id="calculateQuoteBtn" class="btn btn-primary w-full sm:w-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-circle mr-2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="m12 16 4-4-4-4"/></svg>
+                            Calculate Quote
+                        </button>
+                        <button type="button" id="saveQuoteBtn" class="btn btn-secondary w-full sm:w-auto">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-save mr-2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Save Quote (Placeholder)
+                        </button>
+                        <button type="reset" id="resetBtn" class="btn btn-secondary w-full sm:w-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw mr-2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            Reset
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="sc_labor_hours">Labor Hours:</label>
-                        <input type="number" id="sc_labor_hours" class="input-field" placeholder="0" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label for="sc_labor_rate_per_hour">Labor Rate per Hour:</label>
-                        <input type="number" id="sc_labor_rate_per_hour" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Total Labor Cost:</label>
-                        <div id="sc_total_labor_cost" class="output-field output-value">0.00</div>
-                    </div>
-                    <div class="form-group">
-                        <label for="sc_total_parts_cost">Total Cost of Parts Used:</label>
-                        <input type="number" id="sc_total_parts_cost" class="input-field" placeholder="0.00" step="0.01">
-                    </div>
-                </div>
+                </form>
             </div>
-            <div class="summary-section mt-6">
-                <h3 class="text-xl font-semibold mb-4 text-gray-700">Service Call Summary</h3>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div class="form-group"><label>Subtotal Before Tax:</label><div id="sc_subtotal_before_tax" class="output-field output-value">0.00</div></div>
-                    <div class="form-group">
-                        <label for="sc_tax_rate">Tax Rate (%):</label>
-                        <input type="number" id="sc_tax_rate" class="input-field" placeholder="0" step="0.01">
+
+            <!-- Right Column: Quote Preview -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-8 bg-white p-6 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Quote Preview</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-printer text-gray-400"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
                     </div>
-                    <div class="form-group"><label>Tax Amount:</label><div id="sc_tax_amount" class="output-field output-value">0.00</div></div>
-                    <div class="form-group col-span-full md:col-span-1"><label>Grand Total:</label><div id="sc_grand_total" class="output-field output-value grand-total text-xl">0.00</div></div>
+
+                    <div class="preview-section">
+                        <div class="preview-item"><span class="text-gray-500">Quote #:</span> <span id="preview_quoteId" class="value">QT-GEM-001</span></div>
+                        <div class="preview-item"><span class="text-gray-500">Date:</span> <span id="preview_date" class="value"></span></div>
+                        <hr class="my-2">
+                        <div class="preview-item"><span class="text-gray-500">Client:</span> <span id="preview_clientName" class="value">N/A</span></div>
+                        <div class="preview-item"><span class="text-gray-500">Project:</span> <span id="preview_projectName" class="value">N/A</span></div>
+                    </div>
+
+                    <div class="preview-section">
+                        <div class="preview-item"><span>Material (cost)</span> <span id="preview_materialCost" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>+ Material Markup (50%)</span> <span id="preview_materialMarkupValue" class="value">$0.00</span></div>
+                        <div class="preview-item font-medium"><span>Materials (marked up)</span> <span id="preview_materialCostMarkedUp" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>Services</span> <span id="preview_serviceCost" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>Labor (<span id="preview_laborHours">0</span> hrs @ $<span id="preview_laborRate">0.00</span>/hr)</span> <span id="preview_totalLabor" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>Installation</span> <span id="preview_installationCost" class="value">$0.00</span></div>
+                        <div class="preview-item font-semibold border-t mt-1 pt-1"><span>Subtotal</span> <span id="preview_subtotal" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>Tax (<span id="preview_taxRate">0.00</span>%)</span> <span id="preview_taxAmount" class="value">$0.00</span></div>
+                        <div class="preview-item total"><span>Total</span> <span id="preview_grandTotal" class="value">$0.00</span></div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h4 class="border-t pt-3">Business Analysis</h4>
+                        <div class="preview-item"><span>Day Percentage</span> <span id="preview_dayPercentage" class="value">0.0%</span></div>
+                        <div class="preview-item"><span>Operating Expenses (Quote Specific)</span> <span id="preview_quoteOperatingExpenses" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>Double Material Cost</span> <span id="preview_doubleMaterialCost" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>Markup Target</span> <span id="preview_markupTarget" class="value">$0.00 - $0.00</span></div>
+                        <div class="preview-item"><span>Profit Percentage</span> <span id="preview_profitPercentage" class="value">0.0%</span></div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h4 class="border-t pt-3">Profit Breakdown</h4>
+                        <div class="preview-item"><span>Total Revenue (after tax)</span> <span id="preview_profit_totalRevenue" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>- Operating Expenses (Day % of Base)</span> <span id="preview_profit_operatingExpenses" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>- Material Costs (actual)</span> <span id="preview_profit_materialCosts" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>- Labor Costs</span> <span id="preview_profit_laborCosts" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>- Service Costs</span> <span id="preview_profit_serviceCosts" class="value">$0.00</span></div>
+                        <div class="preview-item"><span>- Installation Costs</span> <span id="preview_profit_installationCosts" class="value">$0.00</span></div>
+                         <div class="preview-item"><span>- Quote Specific OpEx</span> <span id="preview_profit_quoteSpecificOpEx" class="value">$0.00</span></div>
+                        <div class="preview-item total"><span>Net Profit</span> <span id="preview_netProfit" class="value">$0.00</span></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- This line links to your JavaScript file -->
-    <script src="script.js"></script>
-</body>
+    </main>
+    </body>
 </html>
